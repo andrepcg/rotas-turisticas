@@ -17,20 +17,36 @@ var PontoTuristico = require("../models/PontoTuristico");
 
 var gmaputil = require('googlemapsutil');
 
-gmaputil.geocoding('1600+Amphitheatre+Parkway,+Mountain+View,+CA', null, function(err, result) {
-    if (err)
+
+
+var geocode = function(rua){
+    gmaputil.geocoding(rua, null, function(err, result) {
+        if (err)
+            console.log(err);
+        else {
+            var json = JSON.parse(result);
+            if(json.results[0].geometry.location)
+                return json.results[0].geometry.location;
+
+        }
+    });
+}
+
+PontoTuristico.find().exec(function(err, pontos){
+    if(err)
         console.log(err);
-    else {
-        var json = JSON.parse(result);
-        console.log(json.results[0].geometry);
+
+    if(pontos){
+        (function theLoop (i) {
+            setTimeout(function () {
+                console.log("Cheese!");
+                if (--i) {
+                    theLoop(i);
+                }
+            }, 5500);
+        })(pontos.length);
+
     }
+
 });
 
-function theLoop (i) {
-    setTimeout(function () {
-        console.log("Cheese!");
-        if (--i) {          // If i > 0, keep going
-            theLoop(i);       // Call the loop again, and pass it the current value of i
-        }
-    }, 3000);
-}
