@@ -32,6 +32,13 @@ var geocode = function(rua){
     });
 }
 
+var f = function(ponto){
+    ponto.gps = geocode(ponto.morada);
+    ponto.save(function(err){
+        if(err) console.error(err);
+    });
+}
+
 PontoTuristico.find().exec(function(err, pontos){
     if(err)
         console.log(err);
@@ -39,7 +46,12 @@ PontoTuristico.find().exec(function(err, pontos){
     if(pontos){
         (function theLoop (i) {
             setTimeout(function () {
-                console.log("Cheese!");
+                f(pontos[i--]);
+                f(pontos[i--]);
+                f(pontos[i--]);
+                f(pontos[i--]);
+                f(pontos[i--]);
+
                 if (--i) {
                     theLoop(i);
                 }
