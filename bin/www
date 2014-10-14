@@ -1,0 +1,36 @@
+#!/usr/bin/env node
+var debug = require('debug')('Rotas-Turisticas');
+var app = require('../app');
+
+var request = require('request');
+var async = require("async");
+var cheerio = require('cheerio');
+
+app.set('port', process.env.PORT || 3000);
+
+var server = app.listen(app.get('port'), function() {
+  debug('Express server listening on port ' + server.address().port);
+});
+
+require("mongoose").connect("mongodb://andrepcg:dhji483hf849823bvngf@ds041380.mongolab.com:41380/rotas");
+var PontoTuristico = require("../models/PontoTuristico");
+
+var gmaputil = require('googlemapsutil');
+
+gmaputil.geocoding('1600+Amphitheatre+Parkway,+Mountain+View,+CA', null, function(err, result) {
+    if (err)
+        console.log(err);
+    else {
+        var json = JSON.parse(result);
+        console.log(json.results[0].geometry);
+    }
+});
+
+function theLoop (i) {
+    setTimeout(function () {
+        console.log("Cheese!");
+        if (--i) {          // If i > 0, keep going
+            theLoop(i);       // Call the loop again, and pass it the current value of i
+        }
+    }, 3000);
+}
