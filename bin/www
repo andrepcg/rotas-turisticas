@@ -18,47 +18,61 @@ var PontoTuristico = require("../models/PontoTuristico");
 var gmaputil = require('googlemapsutil');
 
 
+/*
+var geocode = function(rua,cb){
 
-var geocode = function(rua){
     gmaputil.geocoding(rua, null, function(err, result) {
-        if (err)
-            console.log(err);
-        else {
+
+        if (err) {
+            console.error(err);
+            cb(null);
+        } else {
             var json = JSON.parse(result);
-            if(json.results[0].geometry.location)
-                return json.results[0].geometry.location;
+            if(json.status == "OK") {
+                cb(json.results[0].geometry.location);
+            }else
+                cb(null);
+
 
         }
+
     });
 }
 
 var f = function(ponto){
-    ponto.gps = geocode(ponto.morada);
-    ponto.save(function(err){
-        if(err) console.error(err);
+    geocode(ponto.morada.trim().replace(/ /g,"+") + "+Portugal", function(loc){
+
+        if(loc) {
+            console.log(2, loc);
+
+            ponto.gps = loc;
+            ponto.save(function(err){
+                if(err) console.error(err);
+            });
+        }
     });
+
+
 }
 
-PontoTuristico.find().exec(function(err, pontos){
+PontoTuristico.find({ gps: { $exists: false} }).exec(function(err, pontos){
     if(err)
-        console.log(err);
+        console.error(err);
 
     if(pontos){
         (function theLoop (i) {
             setTimeout(function () {
-                f(pontos[i--]);
-                f(pontos[i--]);
-                f(pontos[i--]);
-                f(pontos[i--]);
-                f(pontos[i--]);
 
-                if (--i) {
+                for(var z = 0; z < 5 && i >= 0; z++)
+                    f(pontos[i--]);
+
+                if (i) {
                     theLoop(i);
                 }
             }, 5500);
-        })(pontos.length);
+        })(pontos.length - 1);
 
     }
 
 });
-
+*/

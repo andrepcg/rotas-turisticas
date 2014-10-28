@@ -7,12 +7,14 @@ var mongoose = require('mongoose');
 var ponto = mongoose.Schema({
 
     nome: 	    String,
-    tipo:	    String,
+    tipo:	    {type: String, index: true },
     morada:	    String,
     descricao:  String,
-    distrito:   String,
-    gps:        { type: [Number], index: '2dsphere'},
-    igogo:      String
+    distrito:   {type: String, index: true },
+    cidade:     {type: String, index: true },
+    gps:        { type: {lat: Number, lng: Number}, index: '2dsphere'},
+    igogo:      String,
+    url:        {type: String, index: true }
 });
 
 module.exports = mongoose.model('PontoTuristico', ponto, 'pontosturisticos');
