@@ -33,4 +33,27 @@ router.get('/distrito/:nome', function(req, res) {
         });
 });
 
+router.get('/pesquisar', function(req, res) {
+    var query = req.query.texto;
+
+    PontoTuristico.find(
+            { $text : { $search : query } },
+            { score : { $meta: "textScore" } })
+        .sort({ score : { $meta : 'textScore' } })
+        .limit(10)
+        .select("-igogo -descricao")
+        .exec(function(err, results) {
+            if(err)
+                res.send({status: "error", err: err});
+            else
+            if(results) {
+
+                res.send({status: "OK", data: results});
+                //res.json(results);
+            }else {
+                res.json({status: "OK", data: null});
+            }
+        });
+});
+
 module.exports = router;

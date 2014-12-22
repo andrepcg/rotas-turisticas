@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8">
+		<title>Manage Subscriptions</title>
+
+		<link href="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.1/css/bootstrap.min.css" rel="stylesheet">
+		
+		<style>
+			
+			body {
+				padding-top: 60px;
+				padding-bottom: 40px;
+			}
+            
+            .tt-dropdown-menu,
+            .gist {
+              text-align: left;
+            }
+
+			.typeahead, .tt-query, .tt-hint {
+                border: 2px solid #CCCCCC;
+                border-radius: 8px 8px 8px 8px;
+                font-size: 24px;
+                height: 30px;
+                line-height: 30px;
+                outline: medium none;
+                padding: 20px 12px;
+                width: 396px;
+            }
+
+            .typeahead {
+              background-color: #fff;
+            }
+
+            .typeahead:focus {
+              border: 2px solid #0097cf;
+            }
+
+            .tt-query {
+              -webkit-box-shadow: inset 0 1px 1px rgba(0, 0, 0, 0.075);
+                 -moz-box-shadow: inset 0 1px 1px rgba(0, 0, 0, 0.075);
+                      box-shadow: inset 0 1px 1px rgba(0, 0, 0, 0.075);
+            }
+
+            .tt-hint {
+              color: #999
+            }
+
+            .tt-dropdown-menu {
+              width: 500px;
+              margin-top: 12px;
+              padding: 8px 0;
+              background-color: #fff;
+              border: 1px solid #ccc;
+              border: 1px solid rgba(0, 0, 0, 0.2);
+              -webkit-border-radius: 8px;
+                 -moz-border-radius: 8px;
+                      border-radius: 8px;
+              -webkit-box-shadow: 0 5px 10px rgba(0,0,0,.2);
+                 -moz-box-shadow: 0 5px 10px rgba(0,0,0,.2);
+                      box-shadow: 0 5px 10px rgba(0,0,0,.2);
+            }
+
+            .tt-suggestion {
+              padding: 3px 20px;
+              font-size: 18px;
+              line-height: 24px;
+            }
+
+            .tt-suggestion.tt-cursor {
+              color: #fff;
+              background-color: #0097cf;
+
+            }
+
+            .tt-suggestion p {
+              margin: 0;
+            }
+            
+            .repo-direita {
+              float: right;
+              font-style: italic;
+                font-size: 10px;
+            }
+
+            .repo-nome {
+              font-size: 20px;
+                margin: 0;
+            }
+
+            .repo-description {
+              margin: 0;
+              font-size: 11px;
+            }
+		</style>
+	</head>
+
+	<body>
+		<div class="container ">
+			<div class="row">
+				<div class="col-md-6">
+					<div id="remote">
+                      <input class="typeahead" type="text" placeholder="Ponto de interesse a pesquisar...">
+                    </div>
+				</div>
+
+
+			</div>
+		</div>
+
+		<script src="http://ajax.googleapis.com/ajax/libs/jquery/2.1.1/jquery.min.js"></script>
+		<script src="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.1/js/bootstrap.min.js"></script>
+        <script src="http://cdnjs.cloudflare.com/ajax/libs/handlebars.js/2.0.0/handlebars.min.js"></script>
+		<script src="http://cdnjs.cloudflare.com/ajax/libs/typeahead.js/0.10.5/typeahead.bundle.min.js"></script>
+		<script>
+			 $(document).ready(function(){
+                var bestPictures = new Bloodhound({
+                  datumTokenizer: Bloodhound.tokenizers.obj.whitespace('value'),
+                  queryTokenizer: Bloodhound.tokenizers.whitespace,
+                  remote: {
+                    url: 'http://localhost:3000/api/pesquisar?texto=%QUERY',
+                    rateLimitWait: 400,
+                    filter: function (pontos) {
+                        return pontos.data;
+                        /*
+                        console.log(pontos);
+                        return $.map(pontos.data, function (ponto) {
+                            return {
+                                value: ponto.nome
+                            };
+                        });
+                        */
+                    }
+                    
+                  }
+                });
+
+                bestPictures.initialize();
+
+                $('#remote .typeahead').typeahead({
+                  highlight: true,
+                  minLength: 3
+                }, {
+                  displayKey: 'nome',
+                  source: bestPictures.ttAdapter(),
+                    
+                  templates: {
+                      suggestion: Handlebars.compile([
+                        '<p class="repo-direita">{{tipo}}, {{cidade}}</p>',
+                        '<p class="repo-nome">{{nome}}</p>',
+                        '<p class="repo-description">{{morada}}</p>'
+                      ].join(''))
+                    }
+                });
+             
+             });
+		</script>
+
+	</body>
+</html>

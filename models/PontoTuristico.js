@@ -8,13 +8,26 @@ var ponto = mongoose.Schema({
 
     nome: 	    String,
     tipo:	    {type: String, index: true },
-    morada:	    String,
+
     descricao:  String,
-    distrito:   {type: String, index: true },
-    cidade:     {type: String, index: true },
-    gps:        { type: {lat: Number, lng: Number}, index: '2dsphere'},
-    igogo:      String,
-    url:        {type: String, index: true }
+
+    localizacao: {
+        distrito:   {type: String, index: true },
+        cidade:     {type: String, index: true },
+        gps:        { type: {lat: Number, lng: Number}, index: '2dsphere'},
+        morada:	    String
+    },
+
+    referencias: {
+        igogo:      String,
+        foursquare: String
+    },
+    
+
+    url:        {type: String, index: { unique: true } },
+
+    // restaurantes
+    cozinha:    {type: String, index: true }
 });
 
 module.exports = mongoose.model('PontoTuristico', ponto, 'pontosturisticos');

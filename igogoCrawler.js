@@ -3,6 +3,7 @@ var user_agent = "Mozilla/5.0 (Windows NT 6.3; WOW64) AppleWebKit/537.36 (KHTML,
 
 var http = require("http");
 var zlib = require('zlib');
+var utils = require("./utils");
 
 function getGzipped(url, callback) {
     // buffer to store the streamed decompression
@@ -35,20 +36,24 @@ var processUrl = function(link, callback){
 
         $ = cheerio.load(data);
 
-        var distrito = $("#breadcrumbs a").slice(1,2).text(),
-            arr = distrito.split(' '),
-            result = arr.splice(0,2);
-        result.push(arr.join(' '));
+        //var distrito = $("#breadcrumbs a").slice(1,2).text();
+            //arr = distrito.split(' '),
+            //result = arr.splice(0,2);
+        //result.push(arr.join(' '));
 
 
         var ponto = new PontoTuristico({
             nome: $("#layout_title").text(),
             igogo: link,
-            tipo: $("#breadcrumbs a").slice(4).text(),
-            morada: $(".address_value").text(),
-            distrito: result[2],
-            descricao: $("#poi_description_text").text()
+            //tipo: $("#breadcrumbs a").slice(3,4).text(),
+            tipo: "Centros Comerciais",
+            morada: $(".address_value").text().trim(),
+            distrito: $("#breadcrumbs a").slice(2,3).text(),
+            cidade: $("#breadcrumbs a").slice(2,3).text(),
+            descricao: $("#poi_description_text").text(),
         });
+
+        ponto.url = utils.urlSlug(ponto.nome);
 
         ponto.save(function(err){
             if(err)
@@ -61,8 +66,8 @@ var processUrl = function(link, callback){
 
 }
 
-for(var i = 1; i <= 33; i++){
-    request({uri: encodeURI("http://www.igogo.pt/pontos-turisticos-Coimbra/?page="+i), maxRedirects:1, headers: {'User-Agent': user_agent}, encoding: null, jar: request.jar() }, function (error, response, body) {
+for(var i = 0; i <= 21; i++){
+    request({uri: encodeURI("http://www.igogo.pt/centros-comercias-coimbra/?page="+i), maxRedirects:1, headers: {'User-Agent': user_agent}, encoding: null, jar: request.jar() }, function (error, response, body) {
         if (!error && response.statusCode == 200) {
             $ = cheerio.load(body);
 
