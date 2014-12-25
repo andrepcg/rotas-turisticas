@@ -5,7 +5,7 @@ var utils = require("../utils");
 
 var request = require('request');
 var async = require("async");
-var cheerio = require('cheerio');
+//var cheerio = require('cheerio');
 
 app.set('port', process.env.PORT || 3000);
 
@@ -16,7 +16,7 @@ var server = app.listen(app.get('port'), function() {
 require("mongoose").connect("mongodb://andrepcg:dhji483hf849823bvngf@ds041380.mongolab.com:41380/rotas");
 var PontoTuristico = require("../models/PontoTuristico");
 
-var gmaputil = require('googlemapsutil');
+//var gmaputil = require('googlemapsutil');
 
 
 /*

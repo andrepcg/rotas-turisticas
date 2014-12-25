@@ -4,10 +4,22 @@ var mongoose = require('mongoose');
 var async = require("async");
 
 var PontoTuristico = require("../models/PontoTuristico");
-var Rotas = require("../models/Rotas");
+var Rotas = require("../models/Rota");
 
-function getPonto(id, callback){
-	PontoTuristico.findOneById(id)
+function getPonto(id, slug, callback){
+	if(id && !slug){
+		PontoTuristico.findById(id)
+			.exec(function(err, ponto){
+				if(err){
+					console.error(err);
+					return callback(err);
+				}
+
+				callback(null, ponto);
+			});
+	}
+	else if(id && slug){
+		PontoTuristico.findOne({"id": id, "slug": slug})
 		.exec(function(err, ponto){
 			if(err){
 				console.error(err);
@@ -16,16 +28,16 @@ function getPonto(id, callback){
 
 			callback(null, ponto);
 		});
+	}
 }
 
 function getNearby(coords, maxDistance, callback){
 	PontoTuristico.geoNear({type: "Point", localizacao: { gps: coords }}, {
 			spherical: true, 
 			maxDistance: maxDistance / 6378137, 
-			distanceMultiplier: 6378137
-		})
-		.limit(10)
-		.exec(function(err, pontos){
+			distanceMultiplier: 6378137,
+			limit: 10
+		},function(err, pontos){
 			if(err){
 				console.error(err);
 				return callback(err);
@@ -37,7 +49,7 @@ function getNearby(coords, maxDistance, callback){
 }
 
 function getRotasComPonto(id, callback){
-	Rotas.find({pontos: id)
+	Rotas.find({pontos: id})
 		.exec(function(err, data){
 			if(err){
 				console.error(err);
@@ -48,39 +60,46 @@ function getRotasComPonto(id, callback){
 		});
 }
 
-function renderPage(req, res){
+function renderPage(req, res, next){
 
 	if(mongoose.Types.ObjectId.isValid(req.params.id)){
 		var id = new mongoose.Types.ObjectId(req.params.id);
+		var slug = req.params.slug;
 
 		var objectos = {};
 
 		async.parallel({
-			ponto: async.apply(getPonto, id),
-			rotas: async.apply(getRotasComPonto, id)
+			ponto: async.apply(getPonto, id, slug),
+			//rotas: async.apply(getRotasComPonto, id)
 
 		}, function (error, results) {
 		    if (error) {
 		    	res.status(500).send(error);
+		    	console.error(error);
 		    	return;
 		    }
 
 		    if(results.ponto){
 		    	objectos.ponto = results.ponto;
+		    	console.log(results.ponto.localizacao.gps);
 			    getNearby(results.ponto.localizacao.gps, 1000, function(pontosProximos){
 			    	objectos.pontosProximos = pontosProximos;
+
 			    });
 		    }
-		    else
-		    	res.redirect("/");
+		    else{
+		    	res.status(404);
+		    	next({message: "Nopeeeee"});
+		    	//res.redirect("/");
+		    }
 		    
 
 		});
 
-		res.render('index', { title: 'Express' });
+		//res.render('index', { title: 'Express' });
 	}
 	else{
-
+		res.redirect("/");
 	}
 }
 
