@@ -14,7 +14,7 @@ var ponto = mongoose.Schema({
     localizacao: {
         distrito:   {type: String, index: true },
         cidade:     {type: String, index: true },
-        gps:        { type: {lat: Number, lng: Number}, index: '2dsphere'},
+        gps:        { type: [Number], index: '2dsphere'},
         morada:	    String
     },
 

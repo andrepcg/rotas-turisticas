@@ -8,6 +8,7 @@ var bodyParser = require('body-parser');
 var routes = require('./routes/index');
 var users = require('./routes/users');
 var api = require('./routes/api');
+var spot = require('./routes/spot');
 
 var app = express();
 
@@ -30,6 +31,7 @@ app.use(function(req, res, next) {
 app.use(express.static(path.join(__dirname, 'public')));
 
 app.use('/', routes);
+app.use('/spot', spot);
 app.use('/users', users);
 app.use('/api', api);
 
