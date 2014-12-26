@@ -48,7 +48,7 @@ function getNearby(coords, maxDistance, callback){
 		});
 }
 
-function getRotasComPonto(id, callback){
+function getRotasCruzamPonto(id, callback){
 	Rotas.find({pontos: id})
 		.exec(function(err, data){
 			if(err){
@@ -70,7 +70,7 @@ function renderPage(req, res, next){
 
 		async.parallel({
 			ponto: async.apply(getPonto, id, slug),
-			//rotas: async.apply(getRotasComPonto, id)
+			//rotas: async.apply(getRotasCruzamPonto, id)
 
 		}, function (error, results) {
 		    if (error) {
