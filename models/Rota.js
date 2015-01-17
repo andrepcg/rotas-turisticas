@@ -22,7 +22,9 @@ var rota = mongoose.Schema({
     desconto: {
         descricao: String,
         percentagem: {type: Number, default: 0}
-    }
+    },
+
+    pais:       {type: String, index: true }
 
 });
 

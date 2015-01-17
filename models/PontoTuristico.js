@@ -3,6 +3,7 @@
  */
 
 var mongoose = require('mongoose');
+var utils = require("../utils");
 
 var ponto = mongoose.Schema({
 
@@ -14,6 +15,7 @@ var ponto = mongoose.Schema({
     localizacao: {
         distrito:   {type: String, index: true },
         cidade:     {type: String, index: true },
+        pais:       {type: String, index: true },
         gps:        { type: [Number], index: '2dsphere'},
         morada:	    String
     },
@@ -24,10 +26,15 @@ var ponto = mongoose.Schema({
     },
     
 
-    url:        {type: String, index: { unique: true } },
+    url:        {type: String},
 
     // restaurantes
     cozinha:    {type: String, index: true }
+});
+
+ponto.pre('save', function(next) {
+    this.url = utils.urlSlug(this.nome);
+    next();
 });
 
 module.exports = mongoose.model('PontoTuristico', ponto, 'pontosturisticos');

@@ -17,6 +17,8 @@
     "async": "latest",
     "forecastio": "latest",
     "xml2js": "0.1.13",
-    "request": "latest"
+    "request": "latest",
+    "bcrypt-nodejs": "latest",
+    "mem-cache": "latest"
   }
 }

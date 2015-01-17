@@ -18,7 +18,38 @@ var PontoTuristico = require("../models/PontoTuristico");
 
 //var gmaputil = require('googlemapsutil');
 
+/*
+var fs = require("fs");
 
+fs.readFile("4square_venues_coimbra.json", function (err, data) {
+    if (err) throw err;
+    var obj = JSON.parse(data);
+
+    for(key in obj){
+        var ponto = obj[key];
+        var p = {
+            nome: ponto.name,
+            tipo: ponto.category,
+            localizacao: {
+                cidade: ponto.city,
+                pais: "Portugal",
+                gps: [ponto.gps.lat, ponto.gps.lng]
+            },
+            referencias: {
+                foursquare: ponto.foursq_id
+            }
+        };
+        if(ponto.address)
+            p.localizacao.morada = ponto.address;
+
+        var ponto_mongo = new PontoTuristico(p);
+        ponto_mongo.save(function(err){
+            if(err)
+                console.error(err);
+        });
+    }
+});
+*/
 /*
 var geocode = function(rua,cb){
 

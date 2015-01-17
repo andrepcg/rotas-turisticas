@@ -10,6 +10,8 @@ var forecastIo = new (require('forecastio'))('6a374d9d6fafc0e653bbcd3aecef7e39',
 var gmaputil = require('googlemapsutil');
 gmaputil.setOutput('json');
 var crypto = require('crypto');
+var MemCache = require('mem-cache');
+var mongoose = require("mongoose");
 
 
 
@@ -63,23 +65,103 @@ router.get('/pesquisar', function(req, res) {
 });
 
 
+
+
+
+
+
+router.get('/direccoes', function(req, res) {
+    var origem = req.query.origem;
+    var destino = req.query.destino;
+    // waypoints = mongoid1,mongoid2,...
+    var waypoints = req.query.waypoints;
+
+    var ids = [];
+    if(mongoose.Types.ObjectId.isValid(origem))
+        ids.push(mongoose.Types.ObjectId(origem));
+    else
+        return res.send({error: "Ponto de origem inválido. Apenas IDs", status: "ERROR", data: null});
+
+    if(mongoose.Types.ObjectId.isValid(destino))
+        ids.push(mongoose.Types.ObjectId(destino));
+    else
+        return res.send({error: "Destino inválido. Apenas IDs", status: "ERROR", data: null});
+
+    waypoints.split(",").forEach(function(id){
+        if(mongoose.Types.ObjectId.isValid(id))
+            ids.push(mongoose.Types.ObjectId(id));
+    });
+
+    PontoTuristico.find({"_id": { $in : ids } })
+        .select("localizacao.gps")
+        .exec(function(err, data){
+            var stringCoords = "";
+            var coords_origem, coords_destino;
+            var final_waypoints = [];
+            data.forEach(function(ponto){
+
+                if(ponto._id != origem && ponto._id != destino){
+                    stringCoords += ponto.localizacao.gps[0] + "," + ponto.localizacao.gps[1] + "|";
+                    final_waypoints.push({id: ponto._id, coords: ponto.localizacao.gps});
+                }
+
+                if(ponto._id == origem)
+                    coords_origem = ponto.localizacao.gps;
+
+                if(ponto._id == destino)
+                    coords_destino = ponto.localizacao.gps;
+            });
+
+            stringCoords = stringCoords.substr(0, stringCoords.length - 1);
+        
+
+            gmaputil.directions(coords_origem[0]+","+coords_origem[1], coords_destino[0]+","+coords_destino[1], {key: "AIzaSyCwdktJFazbeyPfWweFW_laQMLRqiXxeSg",waypoints: "optimize:true|" + stringCoords}, function(err, data){
+                if (err) {
+                    console.error(err);
+                    return res.send({error: err, status: "error", data: null});
+                }
+
+                var result = JSON.parse(data);
+
+                if(result.status == "OK"){
+                    var out = {error: null,
+                        status: "OK",
+                        data: {
+                            origem: {id: ids[0], coords: coords_origem},
+                            destino: {id: ids[1], coords: coords_destino},
+                            waypoints: final_waypoints,
+                            ordem_waypoints: result.routes[0].waypoint_order,
+                            polyline: result.routes[0].overview_polyline.points
+                        }
+                    };
+
+                    return res.send(out);
+
+
+                }
+                else
+                    return res.send({error: result.status, status: "error", data: null});
+                
+            }, null, true);
+
+        });
+});
+
+
+
+
+
+
+
+
+
 //
-// Meteorologia
+////// Meteorologia
 //
-
-var cacheTempo = {};
-
-/*
-{
-    "9b74c9897bac770ffc029102a200c5de": {
-        "condicoes": {},
-        "timestamp": xxx
-    }
-
-}
-*/
 
 var CACHE_PERIOD = 20 * 60 // 20 minutos
+var cacheTempo = new MemCache({timeout: CACHE_PERIOD * 1000});
+
 
 router.get('/tempo', function(req, res) {
     var md5sum = crypto.createHash('md5');
@@ -107,38 +189,23 @@ router.get('/tempo', function(req, res) {
         }
     }
 
-    if(cacheTempo.hasOwnProperty(hash)){
-        if(curTimestamp() - cacheTempo[hash].timestamp < CACHE_PERIOD)
-            return res.send({error: null, status: "OK", data: cacheTempo[hash].condicoes});
-        else{
-            queryWeatherAPI({local: local, gps: coords}, function(err, data){
-                if(err){
-                    console.error(err);
-                    return res.send({error: "Algo aconteceu...", status: "error", data: null});
-                }
-                cacheTempo[hash] = {};
+    var dados = cacheTempo.get(hash);
 
-                cacheTempo[hash].timestamp = curTimestamp();
-                cacheTempo[hash].condicoes = data;
-                return res.send({error: null, status: "OK", data: cacheTempo[hash].condicoes});
-            });
-        } 
-
+    if(dados){
+        return res.send({error: null, status: "OK", data: dados});
     }
     else{
 
         queryWeatherAPI({local: local, gps: coords}, function(err, data){
             if(err){
                 console.error(err);
-                return res.send({error: "Algo aconteceu...", status: "error", data: null});
+                return res.send({error: err, status: "error", data: null});
             }
 
             if(data){
-                cacheTempo[hash] = {};
 
-                cacheTempo[hash].timestamp = curTimestamp();
-                cacheTempo[hash].condicoes = data;
-                return res.send({error: null, status: "OK", data: cacheTempo[hash].condicoes});
+                cacheTempo.set(hash, data);
+                return res.send({error: null, status: "OK", data: data});
             }
 
             return res.send({error: null, status: "NO_DATA", data: null});
@@ -154,7 +221,7 @@ var iooptions = {
 };
 function queryWeatherAPI(options, callback){
     if(options.local){
-        gmaputil.geocoding(options.local.trim().replace(/ /g,"+"), null, function(err, result) {
+        gmaputil.geocoding(options.local.trim().replace(/ /g,"+"), {key: "AIzaSyCwdktJFazbeyPfWweFW_laQMLRqiXxeSg"}, function(err, result) {
             if (err) {
                 console.error(err);
                 return callback(err, null);
@@ -165,13 +232,14 @@ function queryWeatherAPI(options, callback){
             if(result.status == "OK"){
                 var coords = result.results[0].geometry.location;
                 forecastIOAPI([result.results[0].geometry.location.lat, result.results[0].geometry.location.lng], function(err, data){
-                    callback(err,data);
+                    data.localizacao.endereco = result.results[0].formatted_address;
+                    callback(err, data);
                 });
             }
             else
                 callback(result.status, null);
 
-        });
+        }, null, true);
     }
     else if(options.gps){
         forecastIOAPI([options.gps[0], options.gps[1]], function(err, data){
@@ -199,7 +267,8 @@ function forecastIOAPI(gps, callback){
         if (err)
             console.error(err);
 
-        callback(err, { vento: {velocidade: data.currently.windSpeed, direccao: data.currently.windBearing},
+        callback(err, { localizacao: {coordenadas: [gps[0], gps[1]]},
+                        vento: {velocidade: data.currently.windSpeed, direccao: data.currently.windBearing},
                         humidade: data.currently.humidity,
                         temperatura: data.currently.temperature,
                         temperaturaAparente: data.currently.apparentTemperature,
